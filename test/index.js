@@ -14,21 +14,10 @@ const config = {
 	baseDir           : baseDirModule,
 	queueNameSyncFiles: 'syncTest',
 	watchDirs         : [baseDirPath + '/sites', baseDirPath + '/sites2'],
-	supportedMethods  : ['open', 'Stats', 'mkdirp', 'access', 'accessSync', 'exists', 'existsSync', 'readFile', 'close', 'closeSync', 'rename', 'truncate', 'readdir', 'readdirSync', 'fstat', 'lstat', 'stat', 'fstatSync', 'lstatSync', 'statSync', 'readlink', 'readlinkSync', 'unlink', 'fchmod', 'fchmodSync', 'chmod', 'chmodSync', 'fchown', 'fchownSync', 'chown', 'chownSync', '_toUnixTimestamp', 'utimes', 'utimesSync', 'futimes', 'futimesSync', 'watch', 'watchFile', 'unwatchFile', 'realpathSync', 'realpath', 'createReadStream', 'ReadStream', 'FileReadStream', 'createWriteStream', 'lutimes', 'lutimesSync', 'lchown', 'lchmod', 'lchownSync', 'lchmodSync', 'ensureDir', 'ensureDirSync', 'remove', 'outputJsonSync', 'readJson', 'readJSON', 'readJsonSync', 'readJSONSync', 'readFileSync'],
-	processedMethods  : ['mkdir', 'mkdirp', 'writeFile', 'rename', 'truncate', 'symlink', 'move', 'copyFile', 'unlink', 'rmdir', 'remove', 'outputFile'],
 	
-	fileSync          : {
-		prefetchCount: 1,// Количество записей забираемых из RabbitMq
-		timeReconnect: 5000,
-		port         : 3388
-	},
+	supportedMethods: ['open', 'Stats', 'mkdirp', 'access', 'accessSync', 'exists', 'existsSync', 'readFile', 'close', 'closeSync', 'rename', 'truncate', 'readdir', 'readdirSync', 'fstat', 'lstat', 'stat', 'fstatSync', 'lstatSync', 'statSync', 'readlink', 'readlinkSync', 'unlink', 'fchmod', 'fchmodSync', 'chmod', 'chmodSync', 'fchown', 'fchownSync', 'chown', 'chownSync', '_toUnixTimestamp', 'utimes', 'utimesSync', 'futimes', 'futimesSync', 'watch', 'watchFile', 'unwatchFile', 'realpathSync', 'realpath', 'createReadStream', 'ReadStream', 'FileReadStream', 'createWriteStream', 'lutimes', 'lutimesSync', 'lchown', 'lchmod', 'lchownSync', 'lchmodSync', 'ensureDir', 'ensureDirSync', 'remove', 'outputJsonSync', 'readJson', 'readJSON', 'readJsonSync', 'readJSONSync', 'readFileSync'],
+	wrapMethods     : ['mkdir', 'mkdirp', 'writeFile', 'rename', 'truncate', 'symlink', 'move', 'copyFile', 'unlink', 'rmdir', 'remove', 'outputFile'],
 	
-	receiver          : {
-		domainName   : 'ulight43.uid.me',
-		port         : 3388,
-		uploadDir    : baseDirPath,
-		maxFieldsSize: 10 * 1024 * 1024 * 1024
-	},
 	timeDelaySymlink  : 1000,
 	storageDir        : 'usync_storage',
 	fileSendMethods   : ['write', 'writeFile', 'createWriteStream', 'rename', 'move', 'copy', 'copyFile'],
@@ -42,19 +31,34 @@ const config = {
 	
 	receivers: [
 		{
-			pathToStorage: 'storage/ul1',
-			domainName   : 'ulight43.uid.me',
-			port         : 3388,
+			pathToStorage   : 'usync_storage/ul1',
+			domainName      : 'ulight43.uid.me',
+			port            : 3388,
+			maxFieldsSize   : 10 * 1024 * 1024 * 1024,
+			uploadDir       : 'tmp',
+			isUseRemoveFiles: true,
 		},
 		{
-			pathToStorage: 'storage/ul1',
-			domainName   : 'ulight43.uid.me',
-			port         : 3388,
+			pathToStorage   : 'usync_storage/backup',
+			domainName      : 'ulight43.uid.me',
+			port            : 3389,
+			maxFieldsSize   : 10 * 1024 * 1024 * 1024,
+			uploadDir       : 'tmp',
+			isUseRemoveFiles: false,
 		},
 	]
 };
 
 const uSync = require('usync')(config);
+
+// describe('Test uSync', function () {
+//	
+// 	it('getPathInStorage', function () {
+// 		let path = uSync.getPathInStorage('test_tmp/sites/r/c/g/rcgljadcc6yb/index.html');
+// 		assert.equal(path, 'test_tmp/sites/r/c/g/rcgljadcc6yb%2Findex.html');
+// 	});
+// });
+
 
 describe('Test deprecated methods', function () {
 	

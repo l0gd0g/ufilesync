@@ -1,20 +1,9 @@
 'use strict';
 
 module.exports = {
-	baseDir       : null,
-	isRunSync     : false, // Включть/выключить отправку файлов на синхронизацию.
-	isRunDebugMode: false, // Включить отладку. В консоль будет выводится вся отладочная информация для всех операций.
-	
-	// Функции которые поддерживаем и разрешены к использованию
-	// TODO оставил только те методы, которые я понимал и которые успел проверить, поэтому если нужно будет добавить, добавляем и смотри как работает
-	supportedMethods: ['Stats', 'access', 'accessSync', 'exists', 'existsSync', 'readFile', 'close', 'closeSync', 'rename', 'truncate', 'readdir', 'readdirSync', 'fstat', 'lstat', 'stat', 'fstatSync', 'lstatSync', 'statSync', 'readlink', 'readlinkSync', 'unlink', 'fchmod', 'fchmodSync', 'chmod', 'chmodSync', 'fchown', 'fchownSync', 'chown', 'chownSync', '_toUnixTimestamp', 'utimes', 'utimesSync', 'futimes', 'futimesSync', 'watch', 'watchFile', 'unwatchFile', 'realpathSync', 'realpath', 'createReadStream', 'ReadStream', 'FileReadStream', 'createWriteStream', 'lutimes', 'lutimesSync', 'lchown', 'lchmod', 'lchownSync', 'lchmodSync', 'ensureDir', 'ensureDirSync', 'remove', 'outputJsonSync', 'readJson', 'readJSON', 'readJsonSync', 'readJSONSync', 'readFileSync'],
-	
-	// Функции которые переопределены
-	processedMethods: ['mkdir', 'writeFile', 'rename', 'truncate', 'symlink', 'move', 'copyFile', 'unlink', 'rmdir', 'remove', 'outputFile'],
-	watchDirs       : ['public'],
-	timeDelaySymlink: 500,
-	regExpFindDirs  : null,
-	rabbitmq        : {
+	rabbitmq          : {
+		exchange      : '',
+		
 		connectionConfig: {
 			host         : 'localhost',
 			port         : 5672,
@@ -23,6 +12,48 @@ module.exports = {
 			prefetchCount: 1,
 		}
 	},
-	debugCommands   : [],
 	
+	// Включть/выключить отправку файлов на синхронизацию.
+	isRunSync     : true,
+	
+	// Включить отладку. В консоль будет выводится вся отладочная информация для всех операций.
+	isRunDebugMode: true, 
+	
+	// Если массив не пустой, то дебажит только перечисленные методы
+	debugCommands: [],
+	
+	// Полный путь к директории проекта
+	baseDir      : '/home/www/my_project',
+	
+	// Директории, которые будут под синхронизацией(если в пути файла встретится "эта" директория, то файл будет отдан на синхронизаци)
+	watchDirs       : ['public'],
+	
+	// Методы, которые разрешены к использованию в модуле
+	supportedMethods: ['Stats', 'mkdirp', 'access', 'accessSync', 'exists', 'existsSync', 'readFile', 'close', 'closeSync', 'rename', 'truncate', 'readdir', 'readdirSync', 'fstat', 'lstat', 'stat', 'fstatSync', 'lstatSync', 'statSync', 'readlink', 'readlinkSync', 'unlink', 'fchmod', 'fchmodSync', 'chmod', 'chmodSync', 'fchown', 'fchownSync', 'chown', 'chownSync', '_toUnixTimestamp', 'utimes', 'utimesSync', 'futimes', 'futimesSync', 'watch', 'watchFile', 'unwatchFile', 'realpathSync', 'realpath', 'createReadStream', 'ReadStream', 'FileReadStream', 'createWriteStream', 'lutimes', 'lutimesSync', 'lchown', 'lchmod', 'lchownSync', 'lchmodSync', 'ensureDir', 'ensureDirSync', 'remove', 'outputJsonSync', 'readJson', 'readJSON', 'readJsonSync', 'readJSONSync', 'readFileSync', 'copy'],
+	
+	// Методы, которые будут обернуты в обработчик
+	wrapMethods: ['mkdir', 'mkdirp', 'mkdirs', 'writeFile', 'rename', 'truncate', 'symlink', 'move', 'copyFile', 'unlink', 'rmdir', 'remove', 'outputFile', 'copy', 'symlink'],
+	
+	// Методы, для которых требуется передача файла на дублирующие сервера
+	fileSendMethods : ['write', 'writeFile', 'createWriteStream', 'rename', 'move', 'copy', 'copyFile'],
+	
+	// Методы, для которых требуется получение даты создания(объект stats)
+	fileGetStats: ['mkdirp', 'mkdirs', 'mkdir', 'write', 'writeFile', 'createWriteStream', 'copy', 'copyFile', 'move', 'rename', 'symlink'],
+	
+	timeDelaySymlink     : 1000,
+	timeoutPublishMessage: 2000,
+	transmitter          : {
+		timeReconnect: 5000,
+	},
+	receivers            : {
+		reserve: {
+			pathToStorage   : 'usync_storage/reserve',
+			domainName      : 'domain.ru',
+			port            : 1234,
+			maxFieldsSize   : 10 * 1024 * 1024 * 1024,
+			uploadDir       : 'tmp',
+			isUseRemoveFiles: false,
+			queuePrefix     : 'sync_reserve'
+		},
+	},
 };
