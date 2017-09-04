@@ -42,17 +42,21 @@ module.exports = {
 	
 	timeDelaySymlink     : 1000,
 	timeoutPublishMessage: 2000,
-	transmitter          : {
-		timeReconnect: 5000,
-	},
 	receivers            : {
 		reserve: {
-			pathToStorage   : 'usync_storage/reserve',
 			domainName      : 'domain.ru',
 			port            : 1234,
 			maxFieldsSize   : 10 * 1024 * 1024 * 1024,
 			uploadDir       : 'tmp',
 			isUseRemoveFiles: false,
+		},
+	},
+	transmitters            : {
+		reserve: {
+			domainName      : 'domain.ru',
+			port            : 1234,
+			pathToStorage   : 'usync_storage/reserve',
+			timeReconnect   : 5000,
 			queuePrefix     : 'sync_reserve'
 		},
 	},
