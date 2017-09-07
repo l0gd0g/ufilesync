@@ -1,4 +1,4 @@
-# fstime
+# uSync
 
 ## Install
 	$ npm install uSync
