@@ -1,7 +1,7 @@
-# uSync
+# uFileSync
 
 ## Install
-	$ npm install uSync
+	$ npm install uFileSync
 
 ## Examples
     This not stable version

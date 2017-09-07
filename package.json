@@ -1,13 +1,13 @@
 {
-	"name": "uSunc",
-	"version": "1.0.0",
+	"name": "uFileSync",
+	"version": "0.0.1",
 	"dependencies": {},
 	"devDependencies": {},
 	"description": ".",
 	"keywords": ["synchronisation", "servers"],
 	"repository": {
 		"type": "git",
-		"url": "git://github.com/l0gd0g/uSync.git"
+		"url": "git://github.com/l0gd0g/uFileSync.git"
 	},
 	"author": "Maxim Jarusov <maxim.jarusov@gmail.com>",
 	"licenses": [{
@@ -19,13 +19,13 @@
 		"node": ">= 4.2.2"
 	},
 	"scripts": {
-		"install": "node-gyp rebuild",
+		"install": "",
 		"test": "mocha"
 	},
 	"maintainers": ["Maxim <maxim.jarusov@gmail.com>"],
-	"homepage": "https://github.com/l0gd0g/uSync.git",
+	"homepage": "https://github.com/l0gd0g/uFileSync.git",
 	"bugs": {
-		"url": "https://github.com/l0gd0g/uSync/issues"
+		"url": "https://github.com/l0gd0g/uFileSync/issues"
 	},
 	"directories": {
 		"test": "test"
