@@ -1,7 +1,17 @@
 {
 	"name": "uFileSync",
 	"version": "0.0.1",
-	"dependencies": {},
+	"dependencies": {
+		"urlencode": "1.x.x",
+		"async": "1.4.x",
+		"amqp": "0.2.x",
+		"fs-extra": "0.24.x",
+		"fstime": "1.0.x",
+		"rimraf": "2.2.x",
+		"form-data": "2.1.x",
+		"formidable": "1.0.x",
+		"lodash": "3.5.x"
+	},
 	"devDependencies": {},
 	"description": ".",
 	"keywords": ["synchronisation", "servers"],
