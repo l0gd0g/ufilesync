@@ -1,5 +1,5 @@
 {
-	"name": "uFileSync",
+	"name": "ufilesync",
 	"version": "0.0.2",
 	"dependencies": {
 		"urlencode": "1.x.x",
@@ -24,7 +24,7 @@
 		"type": "MIT",
 		"url": "http://www.opensource.org/licenses/MIT"
 	}],
-	"main": "./lib/index",
+	"main": "./index",
 	"engines": {
 		"node": ">= 4.2.2"
 	},
