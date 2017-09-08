@@ -1,6 +1,6 @@
 {
 	"name": "ufilesync",
-	"version": "0.0.2",
+	"version": "0.0.3",
 	"dependencies": {
 		"urlencode": "1.x.x",
 		"async": "1.4.x",

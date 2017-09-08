@@ -1,6 +1,7 @@
 'use strict';
-const USync = require('./lib/usync');
 
-module.exports = (config) => {
-	return new USync(config);
+module.exports = {
+	synchronisation: require('./lib/usync'),
+	tasks          : require('./lib/tasks'),
+	decorator      : require('./lib/decorator')
 };
