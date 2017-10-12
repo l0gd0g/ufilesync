@@ -3,7 +3,7 @@
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
-let baseDirModule = '/home/projects/ulight/ulight8/node_modules/usync';
+let baseDirModule = '/home/lprojects/ulight/ulight8/node_modules/usync';
 let baseDirPath = 'test_tmp';
 
 const config = {
@@ -32,7 +32,7 @@ const config = {
 	receivers: [
 		{
 			pathToStorage   : 'usync_storage/ul1',
-			domainName      : 'ulight43.uid.me',
+			domainName      : 'server1',
 			port            : 3388,
 			maxFieldsSize   : 10 * 1024 * 1024 * 1024,
 			uploadDir       : 'tmp',
@@ -40,7 +40,7 @@ const config = {
 		},
 		{
 			pathToStorage   : 'usync_storage/backup',
-			domainName      : 'ulight43.uid.me',
+			domainName      : 'server2',
 			port            : 3389,
 			maxFieldsSize   : 10 * 1024 * 1024 * 1024,
 			uploadDir       : 'tmp',
