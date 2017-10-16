@@ -1,29 +1,35 @@
 {
 	"name": "ufilesync",
-	"version": "0.0.8",
+	"version": "0.0.9",
 	"dependencies": {
-		"urlencode": "1.x.x",
-		"async": "1.4.x",
 		"amqp": "0.2.x",
-		"fs-extra": "0.24.x",
-		"fstime": "1.0.x",
-		"rimraf": "2.2.x",
+		"async": "1.4.x",
 		"form-data": "2.1.x",
 		"formidable": "1.0.x",
-		"lodash": "3.5.x"
+		"fs-extra": "0.24.x",
+		"fstime": "1.0.x",
+		"lodash": "3.5.x",
+		"mocha": "^4.0.1",
+		"rimraf": "2.2.x",
+		"urlencode": "1.x.x"
 	},
 	"devDependencies": {},
 	"description": ".",
-	"keywords": ["synchronisation", "servers"],
+	"keywords": [
+		"synchronisation",
+		"servers"
+	],
 	"repository": {
 		"type": "git",
 		"url": "git://github.com/l0gd0g/uFileSync.git"
 	},
 	"author": "Maxim Jarusov <maxim.jarusov@gmail.com>",
-	"licenses": [{
-		"type": "MIT",
-		"url": "http://www.opensource.org/licenses/MIT"
-	}],
+	"licenses": [
+		{
+			"type": "MIT",
+			"url": "http://www.opensource.org/licenses/MIT"
+		}
+	],
 	"main": "./index",
 	"engines": {
 		"node": ">= 4.2.2"
@@ -32,7 +38,9 @@
 		"install": "",
 		"test": "mocha"
 	},
-	"maintainers": ["Maxim <maxim.jarusov@gmail.com>"],
+	"maintainers": [
+		"Maxim <maxim.jarusov@gmail.com>"
+	],
 	"homepage": "https://github.com/l0gd0g/uFileSync.git",
 	"bugs": {
 		"url": "https://github.com/l0gd0g/uFileSync/issues"

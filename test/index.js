@@ -3,6 +3,7 @@
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
+const _ = require('lodash');
 let baseDirModule = '/home/lprojects/ulight/ulight8/node_modules/usync';
 let baseDirPath = 'test_tmp';
 
@@ -10,17 +11,11 @@ const config = {
 	exchange          : '',
 	isRunSync         : true,
 	isRunDebugMode    : false,
-	debugCommands     : [],// Если массив не пустой, то дебажит только перечисленные методы
+	debugCommands: ['symlink', 'open'],
 	baseDir           : baseDirModule,
 	queueNameSyncFiles: 'syncTest',
 	watchDirs         : [baseDirPath + '/sites', baseDirPath + '/sites2'],
 	
-	supportedMethods: ['open', 'Stats', 'mkdirp', 'access', 'accessSync', 'exists', 'existsSync', 'readFile', 'close', 'closeSync', 'rename', 'truncate', 'readdir', 'readdirSync', 'fstat', 'lstat', 'stat', 'fstatSync', 'lstatSync', 'statSync', 'readlink', 'readlinkSync', 'unlink', 'fchmod', 'fchmodSync', 'chmod', 'chmodSync', 'fchown', 'fchownSync', 'chown', 'chownSync', '_toUnixTimestamp', 'utimes', 'utimesSync', 'futimes', 'futimesSync', 'watch', 'watchFile', 'unwatchFile', 'realpathSync', 'realpath', 'createReadStream', 'ReadStream', 'FileReadStream', 'createWriteStream', 'lutimes', 'lutimesSync', 'lchown', 'lchmod', 'lchownSync', 'lchmodSync', 'ensureDir', 'ensureDirSync', 'remove', 'outputJsonSync', 'readJson', 'readJSON', 'readJsonSync', 'readJSONSync', 'readFileSync'],
-	wrapMethods     : ['mkdir', 'mkdirp', 'writeFile', 'rename', 'truncate', 'symlink', 'move', 'copyFile', 'unlink', 'rmdir', 'remove', 'outputFile'],
-	
-	timeDelaySymlink  : 1000,
-	storageDir        : 'usync_storage',
-	fileSendMethods   : ['write', 'writeFile', 'createWriteStream', 'rename', 'move', 'copy', 'copyFile'],
 	rabbitmq          : {
 		host         : 'localhost',
 		port         : 5672,
@@ -29,30 +24,32 @@ const config = {
 		prefetchCount: 1,
 	},
 	
-	receivers: [
-		{
-			pathToStorage   : 'usync_storage/ul1',
-			domainName      : 'server1',
-			port            : 3388,
-			maxFieldsSize   : 10 * 1024 * 1024 * 1024,
-			uploadDir       : 'tmp',
-			isUseRemoveFiles: true,
-		},
-		{
-			pathToStorage   : 'usync_storage/backup',
-			domainName      : 'server2',
-			port            : 3389,
+	receivers            : {
+		reserve: {
+			domainName      : 'domain.ru',
+			port            : 1234,
 			maxFieldsSize   : 10 * 1024 * 1024 * 1024,
 			uploadDir       : 'tmp',
 			isUseRemoveFiles: false,
 		},
-	]
+	},
+	transmitters            : {
+		reserve: {
+			domainName      : 'domain.ru',
+			port            : 1234,
+			pathToStorage   : 'usync_storage/reserve',
+			timeReconnect   : 5000,
+			queuePrefix     : 'sync_reserve'
+		},
+	},
 };
 
-const uSync = require('usync')(config);
+
+const UFileSync = require('ufilesync');
+const uSync = new UFileSync.synchronisation(config);
 
 // describe('Test uSync', function () {
-//	
+//
 // 	it('getPathInStorage', function () {
 // 		let path = uSync.getPathInStorage('test_tmp/sites/r/c/g/rcgljadcc6yb/index.html');
 // 		assert.equal(path, 'test_tmp/sites/r/c/g/rcgljadcc6yb%2Findex.html');
@@ -83,6 +80,7 @@ describe('Test decorator', function () {
 	let fd;
 	let fileNameSymlink = 'symlinkFile.txt';
 	let fullPathToFile = baseDirPath + siteDirPath + '/' + fileName;
+	let fullPathToFileRelative = './' + baseDirPath + siteDirPath + '/' + fileName + '_2';
 	let fullPathToFile2 = baseDirPath + '/sites2/a/b/c/abc-sitename/' + fileName;
 	
 	uSync.on('ready', function () {
@@ -103,6 +101,28 @@ describe('Test decorator', function () {
 		});
 	});
 	
+	it('copy', function (done) {
+		let fileName = fullPathToFile + '_copy';
+		uSync.fs.copy(fullPathToFile, fileName, err => {
+			assert.ifError(err);
+			done();
+		});
+	});
+	
+	it('copy with relative path "./"', function (done) {
+		let fileNameSrc = '/tmp/testfile.tmp_123';
+		let fileNameDest = fullPathToFileRelative;
+		
+		uSync.fs.writeFile(fileNameSrc, 'example text...', err => {
+			assert.ifError(err);
+			
+			uSync.fs.copy(fileNameSrc, fileNameDest, err => {
+				assert.ifError(err);
+				done();
+			});
+		});
+	});
+	
 	it('close', function (done) {
 		uSync.fs.open(fullPathToFile, 'w', (err, _fd) => {
 			fd = _fd;
@@ -116,27 +136,15 @@ describe('Test decorator', function () {
 	});
 	
 	it('symlink', function (done) {
-		uSync.fs.writeFile(fullPathToFile, 'example text...', err => {
+		let fileNameSrc = fullPathToFile + '_symlink';
+		uSync.fs.writeFile(fileNameSrc, 'example text...', err => {
 			assert.ifError(err);
-			uSync.fs.symlink(fullPathToFile, baseDirPath + siteDirPath + '/' + fileNameSymlink, err => {
+			uSync.fs.symlink(fileNameSrc, baseDirPath + siteDirPath + '/' + fileNameSymlink, err => {
 				assert.ifError(err);
 				done();
 			});
 		});
 	});
-	
-	// it('symlink check if not supported path', function (done) {
-	// 	uSync.fs.symlink(fullPathToFile2, baseDirPath + siteDirPath + '/' + fileNameSymlink, err => {
-	// 		console.log(err);
-	// 		if (err && err instanceof uSync.exceptions.NotSupportedPathSymlink) {
-	// 			assert.ok(1);
-	// 		} else {
-	// 			assert.ok(false);
-	// 		}
-	// 		done();
-	// 	});
-	// });
-	
 	
 	it('unlink', function (done) {
 		uSync.fs.unlink(fullPathToFile, err => {
@@ -169,9 +177,8 @@ describe('Test decorator', function () {
 describe('Test transmitter', function () {
 	
 	it('create and connect to rabbitmq', function (done) {
-		const transmitter = require('usync/transmitter')(config);
+		const transmitter =  require('ufilesync/transmitter')(config);
 		transmitter.debug = (message) => {
-			console.log(message);
 		};
 		
 		transmitter.on('error', err => {
@@ -188,9 +195,8 @@ describe('Test transmitter', function () {
 describe('Test receiver', function () {
 	
 	it('create', function (done) {
-		const receiver = require('usync/receiver')(config);
+		const receiver = require('ufilesync/receiver')(config);
 		receiver.debug = (message) => {
-			console.log(message);
 		};
 		
 		receiver.on('error', err => {
