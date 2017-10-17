@@ -153,6 +153,13 @@ describe('Test decorator', function () {
 		});
 	});
 	
+	it('unlink with taskSkip()', function (done) {
+		uSync.fs.unlink(uSync.taskSkip(), fullPathToFileRelative, err => {
+			assert.ifError(err);
+			done();
+		});
+	});
+	
 	it('rimraf', function (done) {
 		
 		uSync.fs.rimraf(baseDirPath, err => {
