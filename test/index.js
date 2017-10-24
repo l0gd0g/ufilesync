@@ -11,7 +11,7 @@ const config = {
 	exchange          : '',
 	isRunSync         : true,
 	isRunDebugMode    : false,
-	debugCommands: ['symlink', 'open'],
+	debugCommands: ['copy', 'unlink', 'symlink'],
 	baseDir           : baseDirModule,
 	queueNameSyncFiles: 'syncTest',
 	watchDirs         : [baseDirPath + '/sites', baseDirPath + '/sites2'],
@@ -44,15 +44,8 @@ const config = {
 	},
 };
 
-var fakeAmqp = require("exp-fake-amqp");
-// var proxyquire = require("proxyquire");
-//
-// proxyquire("exp-amqp-connection", {
-// 	amqp: fakeAmqp
-// });
-
 const UFileSync = require('..');
-const uSync = new UFileSync.synchronisation(config, fakeAmqp);
+const uSync = new UFileSync.synchronisation(config);
 
 // describe('Test uSync', function () {
 //
@@ -107,7 +100,7 @@ describe('Test decorator', function () {
 		});
 	});
 	
-	it('copy', function (done) {
+	it('copy file', function (done) {
 		let fileName = fullPathToFile + '_copy';
 		uSync.fs.copy(fullPathToFile, fileName, err => {
 			assert.ifError(err);
@@ -115,7 +108,7 @@ describe('Test decorator', function () {
 		});
 	});
 	
-	it('copy with relative path "./"', function (done) {
+	it('copy file with relative path "./"', function (done) {
 		let fileNameSrc = '/tmp/testfile.tmp_123';
 		let fileNameDest = fullPathToFileRelative;
 		
@@ -149,6 +142,22 @@ describe('Test decorator', function () {
 				assert.ifError(err);
 				done();
 			});
+		});
+	});
+	
+	
+	
+	it('copy dir', function (done) {
+		uSync.fs.copy(baseDirPath + siteDirPath, baseDirPath + siteDirPath + '_copy', err => {
+			assert.ifError(err);
+			done();
+		});
+	});
+	
+	it('copy dir with option replace', function (done) {
+		uSync.fs.copy(baseDirPath + siteDirPath, baseDirPath + siteDirPath + '_copy', {replace: true}, err => {
+			assert.ifError(err);
+			done();
 		});
 	});
 	
