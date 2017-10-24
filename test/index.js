@@ -44,9 +44,15 @@ const config = {
 	},
 };
 
+var fakeAmqp = require("exp-fake-amqp");
+// var proxyquire = require("proxyquire");
+//
+// proxyquire("exp-amqp-connection", {
+// 	amqp: fakeAmqp
+// });
 
-const UFileSync = require('ufilesync');
-const uSync = new UFileSync.synchronisation(config);
+const UFileSync = require('..');
+const uSync = new UFileSync.synchronisation(config, fakeAmqp);
 
 // describe('Test uSync', function () {
 //
@@ -184,7 +190,7 @@ describe('Test decorator', function () {
 describe('Test transmitter', function () {
 	
 	it('create and connect to rabbitmq', function (done) {
-		const transmitter =  require('ufilesync/transmitter')(config);
+		const transmitter =  require('../transmitter')(config);
 		transmitter.debug = (message) => {
 		};
 		
@@ -202,7 +208,7 @@ describe('Test transmitter', function () {
 describe('Test receiver', function () {
 	
 	it('create', function (done) {
-		const receiver = require('ufilesync/receiver')(config);
+		const receiver = require('../receiver')(config);
 		receiver.debug = (message) => {
 		};
 		

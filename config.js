@@ -32,7 +32,7 @@ module.exports = {
 	supportedMethods: ['Stats', 'mkdirp', 'access', 'accessSync', 'exists', 'existsSync', 'readFile', 'close', 'closeSync', 'rename', 'truncate', 'readdir', 'readdirSync', 'fstat', 'lstat', 'stat', 'fstatSync', 'lstatSync', 'statSync', 'readlink', 'readlinkSync', 'unlink', 'fchmod', 'fchmodSync', 'chmod', 'chmodSync', 'fchown', 'fchownSync', 'chown', 'chownSync', '_toUnixTimestamp', 'utimes', 'utimesSync', 'futimes', 'futimesSync', 'watch', 'watchFile', 'unwatchFile', 'realpathSync', 'realpath', 'createReadStream', 'ReadStream', 'FileReadStream', 'createWriteStream', 'lutimes', 'lutimesSync', 'lchown', 'lchmod', 'lchownSync', 'lchmodSync', 'ensureDir', 'ensureDirSync', 'remove', 'outputJsonSync', 'readJson', 'readJSON', 'readJsonSync', 'readJSONSync', 'readFileSync', 'copy', 'open'],
 	
 	// Методы, которые будут обернуты в обработчик
-	wrapMethods: ['mkdir', 'mkdirp', 'mkdirs', 'writeFile', 'rename', 'truncate', 'symlink', 'move', 'copyFile', 'unlink', 'rmdir', 'remove', 'outputFile', 'copy'],
+	wrapMethods: ['mkdir', 'mkdirp', 'mkdirs', 'writeFile', 'rename', 'truncate', 'symlink', 'move', 'copyFile', 'unlink', 'rmdir', 'remove', 'outputFile', 'copy', 'createWriteStream'],
 	
 	// Методы, для которых требуется передача файла на дублирующие сервера
 	fileSendMethods : ['write', 'writeFile', 'createWriteStream', 'rename', 'move', 'copy', 'copyFile'],
@@ -41,7 +41,13 @@ module.exports = {
 	fileGetStats: ['mkdirp', 'mkdirs', 'mkdir', 'write', 'writeFile', 'createWriteStream', 'copy', 'copyFile', 'move', 'rename', 'symlink'],
 	
 	timeDelaySymlink     : 1000,
+	
+	// Время отведенное, на отправку сообщения в RabbitMQ
 	timeoutPublishMessage: 2000,
+	
+	// Возвращать в колбеке ошибку или
+	deliveredMode        : true,
+	
 	receivers            : {
 		reserve: {
 			domainName      : 'domain.ru',
