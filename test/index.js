@@ -10,8 +10,8 @@ let baseDirPath = 'test_tmp';
 const config = {
 	exchange          : '',
 	isRunSync         : true,
-	isRunDebugMode    : true,
-	debugCommands: ['createWriteStream'],
+	isRunDebugMode    : false,
+	debugCommands: ['writeFile'],
 	baseDir           : baseDirModule,
 	queueNameSyncFiles: 'syncTest',
 	watchDirs         : [baseDirPath + '/sites', baseDirPath + '/sites2'],
@@ -50,15 +50,6 @@ const config = {
 const UFileSync = require('..');
 const uSync = new UFileSync.synchronisation(config);
 
-// describe('Test uSync', function () {
-//
-// 	it('getPathInStorage', function () {
-// 		let path = uSync.getPathInStorage('test_tmp/sites/r/c/g/rcgljadcc6yb/index.html');
-// 		assert.equal(path, 'test_tmp/sites/r/c/g/rcgljadcc6yb%2Findex.html');
-// 	});
-// });
-
-
 describe('Test deprecated methods', function () {
 
 	it('openSync', function (done) {
@@ -95,7 +86,17 @@ describe('Test decorator', function () {
 			});
 		});
 	});
-
+	
+	// it('writeFile gen err', function (done) {
+	// 	uSync.fs.writeFile(fullPathToFile, 'example text...', err => {
+	// 		console.log(err);
+	//
+	// 		// assert.ifError(err);
+	// 		// assert.ok(err.stack);
+	// 		done();
+	// 	});
+	// });
+	
 	it('mkdirp', function (done) {
 		uSync.fs.mkdirp(baseDirPath + siteDirPath, err => {
 			assert.ifError(err);
@@ -109,6 +110,8 @@ describe('Test decorator', function () {
 			done();
 		});
 	});
+
+
 
 	it('copy file', function (done) {
 		let fileName = fullPathToFile + '_copy';
@@ -164,7 +167,10 @@ describe('Test decorator', function () {
 		
 		writeStream.on('error', err => {
 			assert.ifError(err);
-		});
+		})
+			.on('close', function () {
+			
+			});
 		
 		writeStream.on('finish', () => {
 			uSync.fs.access(newFileName, (err) => {
