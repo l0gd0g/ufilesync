@@ -66,4 +66,6 @@ module.exports = {
 			queuePrefix     : 'sync_reserve'
 		},
 	},
+	// Количество влоенных букв, при генерации очередей в RabbitMq(queueName_a = 1, queueName_a_b = 2)
+	levelDeepQueuePostfix: 1
 };

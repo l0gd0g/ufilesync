@@ -283,15 +283,15 @@ let tests = function (uSync) {
 			});
 			
 			const transmitter =  require('../transmitter')(configTransmitter);
-			
+
 			transmitter.debug = (message) => {
 			};
-			
-			
+
+
 			transmitter.on('error', err => {
 				assert.ifError(err);
 			});
-			
+
 			transmitter.on('taskComplete', (task) => {
 				// console.log('t taskComplete');
 				// done();
