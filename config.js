@@ -62,7 +62,7 @@ module.exports = {
 			domainName      : 'domain.ru',
 			port            : 1234,
 			pathToStorage   : 'usync_storage/reserve',
-			timeReconnect   : 5000,
+			timeReconnect   : 200,
 			queuePrefix     : 'sync_reserve'
 		},
 	},
