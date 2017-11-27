@@ -63,9 +63,10 @@ module.exports = {
 			port            : 1234,
 			pathToStorage   : 'usync_storage/reserve',
 			timeReconnect   : 200,
+			prefetchCount   : 1,
 			queuePrefix     : 'sync_reserve'
 		},
 	},
-	// Количество влоенных букв, при генерации очередей в RabbitMq(queueName_a = 1, queueName_a_b = 2)
+	// Количество вложенных букв, при генерации очередей в RabbitMq(queueName_a = 1, queueName_a_b = 2)
 	levelDeepQueuePostfix: 1
 };

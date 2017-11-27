@@ -257,68 +257,6 @@ let tests = function (uSync) {
 		
 	});
 	
-	
-	describe('Test send files', function () {
-		
-		before( done => {
-			fs.remove(baseDirPath, err => {
-				uSync.on('ready', function () {
-					done();
-				});
-			});
-		});
-		
-		it('create and connect to rabbitmq', function (done) {
-			let configTransmitter = config.transmitters.reserve;
-			configTransmitter.rabbitmq = config.rabbitmq;
-			configTransmitter.fileSendMethods = config.fileSendMethods;
-			
-			const receiver = require('../receiver')(config.receivers.reserve);
-			
-			receiver.debug = (message) => {
-			};
-			
-			receiver.on('error', err => {
-				assert.ifError(err);
-			});
-			
-			const transmitter =  require('../transmitter')(configTransmitter);
-
-			transmitter.debug = (message) => {
-			};
-
-
-			transmitter.on('error', err => {
-				assert.ifError(err);
-			});
-
-			transmitter.on('taskComplete', (task) => {
-				// console.log('t taskComplete');
-				// done();
-			});
-			
-			
-			
-			setTimeout(() => {
-				done();
-				
-			}, 1500);
-		});
-		
-		
-		
-		
-		after( done => {
-			fs.remove(baseDirPath, err => {
-				fs.remove(config.transmitters.reserve.pathToStorage, err => {
-					done();
-				});
-			});
-		});
-	});
-	
-	
-	
 };
 
 
