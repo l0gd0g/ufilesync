@@ -1,8 +1,8 @@
 {
 	"name": "ufilesync",
-	"version": "0.3.0",
+	"version": "0.3.1",
 	"dependencies": {
-		"amqp": "0.2.6",
+		"amqplib": "^0.5.2",
 		"async": "2.5.0",
 		"busboy": "^0.2.14",
 		"form-data": "2.3.1",
@@ -38,7 +38,7 @@
 	},
 	"scripts": {
 		"install": "",
-		"test": "mocha --timeout 45000"
+		"test": "mocha --timeout 20000"
 	},
 	"maintainers": [
 		"Maxim <maxim.jarusov@gmail.com>"

@@ -1,11 +1,14 @@
 'use strict';
-const amqp = require('amqp');
+const amqplib = require('amqplib/callback_api');
+
 
 const assert = require('assert');
 const fs = require('fs-extra');
 const _ = require('lodash');
 const async = require('async');
-let baseDirModule = '/home/projects/ulight/ulight8/node_modules/usync';
+
+// let baseDirModule = '/home/projects/ulight/ulight8/node_modules/usync';
+let baseDirModule = 'tests';
 let baseDirPath = 'test_tmp';
 
 const config = {
@@ -20,11 +23,20 @@ const config = {
 	fileSendMethods: ['write', 'writeFile', 'createWriteStream', 'rename', 'move', 'copy', 'copyFile'],
 	
 	rabbitmq: {
-		host         : 'localhost',
-		port         : 5672,
-		login        : 'test',
-		password     : 'test',
-		prefetchCount: 1,
+		connectionConfig: {
+			protocol : 'amqp',
+			hostname : 'localhost',
+			port     : 5672,
+			username : 'guest',
+			password : 'guest',
+			locale   : 'en_US',
+			frameMax : 0,
+			heartbeat: 0,
+		},
+		queueConfig     : {
+			autoDelete: true,
+			durable   : false
+		}
 	},
 	
 	receivers   : {
@@ -32,7 +44,8 @@ const config = {
 			domainName      : 'localhost',
 			port            : 33800,
 			maxFieldsSize   : 10 * 1024 * 1024 * 1024,
-			uploadDir       : baseDirPath,
+			uploadDir       : baseDirPath + '/upload',
+			baseDir         : baseDirPath + '/received',
 			uploadDirBase   : '',
 			isUseRemoveFiles: false,
 		},
@@ -43,21 +56,29 @@ const config = {
 			port         : 33800,
 			pathToStorage: baseDirPath + '/storage',
 			timeReconnect: 2000,
-			queuePrefix  : 'sync_reserve',
-			prefetchCount: 100
+			queuePrefix  : 'for_test_transmitter',
+			prefetchCount: 30
 		},
 	},
 	
-	countGenerateTasks: 200,
+	countGenerateTasks: 100,
+	letters: ['t', '2']
 };
 
+let debug = function () {
+	// console.log.apply(null, arguments);
+};
 
-let prepareTask = function (fileName, fileNameStorage, command, cb) {
+let prepareTask = function (fileName, fileNameStorage, command, letter, cb) {
+	
+	// Создаем файл оригинал
 	fs.writeFile(fileName, 'example text...' + fileName, err => {
 		assert.ifError(err);
 		
+		// Кладем файл(его состояние) в хранилище, для передачи на другой сервер. После выполнения передачи, файл будет удален из хранилища.
 		fs.copy(fileName, fileNameStorage, err => {
 			assert.ifError(err);
+			debug('write files: ', fileName, fileNameStorage);
 			
 			fs.lstat(fileName, (err, stats) => {
 				assert.ifError(err);
@@ -66,7 +87,7 @@ let prepareTask = function (fileName, fileNameStorage, command, cb) {
 					null,
 					{
 						"id"       : fileName,
-						"queueName": config.transmitters.reserve.queuePrefix + '_t',
+						"queueName": config.transmitters.reserve.queuePrefix + '_' + letter,
 						"dates"    : {
 							"begin"  : new Date(),
 							"fs"     : new Date(),
@@ -93,56 +114,95 @@ describe('Send stack tasks', function () {
 	let receiver;
 	let transmitter;
 	let stackTasks = {};
-	let exchange;
+	let channel;
 	
 	
 	before(done => {
-		let rbmqConnection = amqp.createConnection(config.rabbitmq);
-		rbmqConnection.on('ready', () => {
+		amqplib.connect(config.rabbitmq, function (err, connection) {
+			assert.ifError(err);
 			
-			rbmqConnection.exchange(config.rabbitmq.exchange, {confirm: true, durable: true}, _exchange => {
-				exchange = _exchange;
+			connection.createChannel((err, _channel) => {
+				assert.ifError(err);
+				channel = _channel;
+				
+				channel.on('error', err => {
+					assert.ifError(err);
+					
+					debug(err);
+				});
+				
+				channel.on('return', message => {
+					debug(message);
+				});
+				
 				
 				let fileName = baseDirPath + '/file_';
 				
+				// Удаляем все к ебеням!
 				fs.remove(baseDirPath, err => {
-					fs.remove(config.transmitters.reserve.pathToStorage, err => {
+					assert.ifError(err);
+					
+					fs.remove(config.receivers.reserve.uploadDir, err => {
+						assert.ifError(err);
 						
-						
-						fs.mkdirp(baseDirPath, err => {
+						fs.remove(config.transmitters.reserve.pathToStorage, err => {
 							assert.ifError(err);
 							
-							fs.mkdirp(config.transmitters.reserve.pathToStorage, err => {
+							// Создаем директории
+							fs.mkdirp(baseDirPath, err => {
 								assert.ifError(err);
 								
-								
-								// Подготавливаем задачи для отправки их в работу
-								async.eachOf(
-									Array(config.countGenerateTasks).fill(1).map(() => {
-										return Math.floor(Math.random() * 999)
-									}),
-									(item, idx, cb) => {
-										prepareTask(fileName + item, config.transmitters.reserve.pathToStorage + '/tmp_' + item, "copy", (err, task) => {
+								fs.mkdirp(config.receivers.reserve.uploadDir, err => {
+									assert.ifError(err);
+									
+									fs.mkdirp(config.receivers.reserve.baseDir, err => {
+										assert.ifError(err);
+										
+										fs.mkdirp(config.transmitters.reserve.pathToStorage, err => {
 											assert.ifError(err);
 											
-											stackTasks[task.id] = task;
+											// Подготавливаем задачи для отправки их в работу
 											
-											cb();
+											async.parallel(
+												config.letters.map(letter => {
+													return cb => {
+														
+														async.eachOf(
+															Array(config.countGenerateTasks).fill(1).map(() => {
+																return `${new Date().getTime()}_${Math.random() * 999}`
+															}),
+															(item, idx, cb) => {
+																prepareTask(fileName + item, config.transmitters.reserve.pathToStorage + '/tmp_' + item, "copy", letter, (err, task) => {
+																	assert.ifError(err);
+																	
+																	stackTasks[task.id] = task;
+																	
+																	channel.sendToQueue(task.queueName, Buffer.from(JSON.stringify(task)));
+																	debug(`send to queue ${task.queueName}: ${task.id}`);
+																	
+																	cb();
+																});
+															},
+															cb
+														);
+														
+													}
+												}),
+												() => {
+													setTimeout(done, 2000);
+												}
+											);
+											
+											
 										});
-									},
-									done
-								);
-								
+									});
+									
+								});
 							});
 						});
-						
 					});
 				});
 			});
-		});
-		
-		rbmqConnection.on('error', function (err) {
-			console.error(err);
 		});
 	});
 	
@@ -150,7 +210,7 @@ describe('Send stack tasks', function () {
 		receiver = require('../receiver')(config.receivers.reserve);
 		
 		receiver.debug = (message) => {
-			// console.log(message);
+			debug(message);
 		};
 		
 		receiver.on('error', err => {
@@ -168,15 +228,14 @@ describe('Send stack tasks', function () {
 		configTransmitter.fileSendMethods = config.fileSendMethods;
 		configTransmitter.levelDeepQueuePostfix = 1;
 		
-		transmitter = require('../transmitter')(configTransmitter, ['t']);
+		transmitter = require('../transmitter')(configTransmitter, ['t', '2']);
 		
 		transmitter.debug = (message) => {
-			// console.log(message);
+			debug(message);
 		};
 		
 		transmitter.on('error', err => {
 			assert.ifError(err);
-			console.log(err);
 		});
 		
 		transmitter.on('ready', () => {
@@ -185,42 +244,37 @@ describe('Send stack tasks', function () {
 	});
 	
 	
-	it(`send ${config.transmitters.reserve.prefetchCount} tasks with files`, function (done) {
+	it(`send ${config.countGenerateTasks * config.letters.length} by ${config.transmitters.reserve.prefetchCount} tasks with files`, function (done) {
+		let isDone = false;
 		transmitter.on('taskComplete', (task) => {
-			// console.log(task.message.id);
-			
+			debug('complete: ' + task.message.id);
 			delete stackTasks[task.message.id];
-			
-			if (Object.keys(stackTasks).length === 0) {
-				done();
-			} else {
-				// console.log(Object.keys(stackTasks).length);
-			}
 		});
 		
-		async.each(
-			stackTasks,
-			(task, cb) => {
-				exchange.publish(
-					task.queueName,
-					JSON.stringify(task),
-					{deliveryMode: 1, mandatory: true},
-					() => {
-						cb();
-					}
-				);
-			},
-			() => {
-			
+		
+		let timeInterval = setInterval(() => {
+			if (isDone) {
+				clearInterval(timeInterval);
+				return;
 			}
-		);
+			
+			if (Object.keys(stackTasks).length === 0) {
+				isDone = true;
+				done();
+			} else {
+				// debug(Object.keys(stackTasks).length);
+			}
+		}, 200);
+		
+		
 	});
-	
 	
 	after(done => {
 		fs.remove(baseDirPath, err => {
 			fs.remove(config.transmitters.reserve.pathToStorage, err => {
 				done();
+				
+				process.exit();
 			});
 		});
 	});

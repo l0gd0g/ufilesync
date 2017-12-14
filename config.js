@@ -5,11 +5,18 @@ module.exports = {
 		exchange      : '',
 		
 		connectionConfig: {
-			host         : 'localhost',
-			port         : 5672,
-			login        : 'guest',
-			password     : 'guest',
-			prefetchCount: 1,
+			protocol : 'amqp',
+			hostname : 'localhost',
+			port     : 5672,
+			username : 'guest',
+			password : 'guest',
+			locale   : 'en_US',
+			frameMax : 0,
+			heartbeat: 0,
+		},
+		queueConfig: {
+			autoDelete: false,
+			durable   : true
 		}
 	},
 	

@@ -11,22 +11,33 @@ const config = {
 	exchange          : '',
 	isRunSync         : true,
 	isRunDebugMode    : false,
-	debugCommands: [],
+	debugCommands     : [],
 	baseDir           : baseDirModule,
 	queueNameSyncFiles: 'syncTest',
 	watchDirs         : [baseDirPath + '/sites', baseDirPath + '/sites2'],
 	
-	fileSendMethods : ['write', 'writeFile', 'createWriteStream', 'rename', 'move', 'copy', 'copyFile'],
+	fileSendMethods: ['write', 'writeFile', 'createWriteStream', 'rename', 'move', 'copy', 'copyFile'],
 	
-	rabbitmq          : {
-		host         : 'localhost',
-		port         : 5672,
-		login        : 'test',
-		password     : 'test',
-		prefetchCount: 1,
+	rabbitmq: {
+		connectionConfig: {
+			protocol : 'amqp',
+			hostname : 'localhost',
+			port     : 5672,
+			username : 'guest',
+			password : 'guest',
+			locale   : 'en_US',
+			frameMax : 0,
+			heartbeat: 0,
+		},
+		queueConfig     : {
+			autoDelete: true,
+			mandatory : true,
+			deliveryMode: true,
+			durable   : false
+		}
 	},
 	
-	receivers            : {
+	receivers   : {
 		reserve: {
 			domainName      : 'localhost',
 			port            : 33800,
@@ -36,13 +47,13 @@ const config = {
 			isUseRemoveFiles: false,
 		},
 	},
-	transmitters            : {
+	transmitters: {
 		reserve: {
-			domainName      : 'localhost',
-			port            : 33800,
-			pathToStorage   : 'usync_storage/reserve',
-			timeReconnect   : 2000,
-			queuePrefix     : 'sync_reserve'
+			domainName   : 'localhost',
+			port         : 33800,
+			pathToStorage: 'usync_storage/reserve',
+			timeReconnect: 2000,
+			queuePrefix  : 'for_test_usync'
 		},
 	},
 };
@@ -78,7 +89,7 @@ let tests = function (uSync) {
 		let fullPathToFile2 = baseDirPath + '/sites2/a/b/c/abc-sitename/' + fileName;
 		
 		
-		before( done => {
+		before(done => {
 			fs.remove(baseDirPath, err => {
 				uSync.on('ready', function () {
 					done();
@@ -209,7 +220,6 @@ let tests = function (uSync) {
 		});
 		
 		
-		
 		it('copy dir', function (done) {
 			uSync.fs.copy(baseDirPath + siteDirPath, baseDirPath + siteDirPath + '_copy', err => {
 				assert.ifError(err);
@@ -267,7 +277,7 @@ describe('Test with run synchronisation', function () {
 });
 
 
-
+//
 describe('Test with shutdown synchronisation', function () {
 	const uSync2 = new UFileSync.synchronisation(_.extend({isRunSync: false}, config));
 	
