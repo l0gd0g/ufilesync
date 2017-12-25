@@ -53,7 +53,7 @@ const config = {
 			port         : 33800,
 			pathToStorage: 'usync_storage/reserve',
 			timeReconnect: 2000,
-			queuePrefix  : 'for_test_usync'
+			queuePrefix  : 'for_test_usync_22'
 		},
 	},
 };
