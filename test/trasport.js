@@ -207,19 +207,19 @@ describe('Send stack tasks', function () {
 	});
 	
 	it('start receiver', function (done) {
-		receiver = require('../receiver')(config.receivers.reserve);
-		
-		receiver.debug = (message) => {
-			debug(message);
-		};
-		
-		receiver.on('error', err => {
-			assert.ifError(err);
-		});
-		
-		receiver.on('ready', err => {
-			done();
-		});
+		// receiver = require('../receiver')(config.receivers.reserve);
+		//
+		// receiver.debug = (message) => {
+		// 	debug(message);
+		// };
+		//
+		// receiver.on('error', err => {
+		// 	assert.ifError(err);
+		// });
+		//
+		// receiver.on('ready', err => {
+		// 	done();
+		// });
 	});
 	
 	it('start transmitter', function (done) {
@@ -236,6 +236,10 @@ describe('Send stack tasks', function () {
 		
 		transmitter.on('error', err => {
 			assert.ifError(err);
+		});
+		
+		transmitter.on('consume', message => {
+			console.log(message);
 		});
 		
 		transmitter.on('ready', () => {
