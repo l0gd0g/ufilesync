@@ -1,6 +1,6 @@
 {
 	"name": "ufilesync",
-	"version": "0.3.4",
+	"version": "0.3.5",
 	"dependencies": {
 		"amqplib": "^0.5.2",
 		"async": "2.5.0",
