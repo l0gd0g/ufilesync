@@ -174,6 +174,20 @@ let tests = function (uSync) {
 			});
 		});
 		
+		it('close connection and reopen connection', function (done) {
+			let fileNameSrc = fullPathToFile + '_symlink_2';
+			
+			uSync.channel.close();
+			
+			uSync.fs.writeFile(fileNameSrc, 'example text...', err => {
+				assert.ifError(err);
+				uSync.fs.symlink(fileNameSrc, baseDirPath + siteDirPath + '/' + fileNameSymlink + '_2', err => {
+					assert.ifError(err);
+					done();
+				});
+			});
+		});
+		
 		it('createWriteStream', function (done) {
 			let newFileName = fullPathToFile + '_by_stream';
 			let readStream = uSync.fs.createReadStream(fullPathToFile);
@@ -273,6 +287,10 @@ let tests = function (uSync) {
 describe('Test with run synchronisation', function () {
 	const uSync = new UFileSync.synchronisation(config);
 	
+	uSync.on('error', err => {
+		// console.log(err);
+	});
+	
 	tests(uSync);
 });
 
@@ -280,6 +298,10 @@ describe('Test with run synchronisation', function () {
 //
 describe('Test with shutdown synchronisation', function () {
 	const uSync2 = new UFileSync.synchronisation(_.extend({isRunSync: false}, config));
+	
+	uSync2.on('error', err => {
+		// console.log(err);
+	});
 	
 	tests(uSync2);
 });
