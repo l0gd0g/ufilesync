@@ -35,7 +35,7 @@ const config = {
 		},
 		queueConfig     : {
 			autoDelete: true,
-			durable   : false
+			durable   : true
 		}
 	},
 	
@@ -57,12 +57,14 @@ const config = {
 			pathToStorage: baseDirPath + '/storage',
 			timeReconnect: 2000,
 			queuePrefix  : 'for_test_transmitter',
-			prefetchCount: 30
+			prefetchCount: 1
 		},
 	},
 	
-	countGenerateTasks: 100,
-	letters: ['t', '2']
+	countGenerateTasks: 2,
+	processedLetters  : '1234',
+	letters           : ['1', '2', '3', '4']
+	// letters           : ['t']
 };
 
 let debug = function () {
@@ -78,7 +80,7 @@ let prepareTask = function (fileName, fileNameStorage, command, letter, cb) {
 		// Кладем файл(его состояние) в хранилище, для передачи на другой сервер. После выполнения передачи, файл будет удален из хранилища.
 		fs.copy(fileName, fileNameStorage, err => {
 			assert.ifError(err);
-			debug('write files: ', fileName, fileNameStorage);
+			// debug('write files: ', fileName, fileNameStorage);
 			
 			fs.lstat(fileName, (err, stats) => {
 				assert.ifError(err);
@@ -109,21 +111,56 @@ let prepareTask = function (fileName, fileNameStorage, command, letter, cb) {
 	});
 };
 
+let generateRandomTask = function (channel, countGenerateTasks, stackTasks, letter, cb) {
+	
+	let fileName = baseDirPath + '/file_';
+	channel.assertQueue(config.transmitters.reserve.queuePrefix + '_' + letter, config.rabbitmq.queueConfig);
+	
+	async.eachOf(
+		Array(countGenerateTasks).fill(1).map(() => {
+			return `${new Date().getTime()}_${Math.random() * 999}`
+		}),
+		(item, idx, cb) => {
+			prepareTask(fileName + item, config.transmitters.reserve.pathToStorage + '/tmp_' + item, "copy", letter, (err, task) => {
+				assert.ifError(err);
+				
+				stackTasks[task.id] = task;
+				
+				
+				if (channel.sendToQueue(task.queueName, Buffer.from(JSON.stringify(task)))) {
+					debug(`send to queue ${task.queueName}: ${task.id}`);
+				} else {
+					debug(`ERROR send to queue ${task.queueName}: ${task.id}`);
+				}
+				
+				cb();
+			});
+		},
+		cb
+	);
+	
+};
 
 describe('Send stack tasks', function () {
 	let receiver;
 	let transmitter;
 	let stackTasks = {};
 	let channel;
-	
+	let cntComplete = 0;
 	
 	before(done => {
-		amqplib.connect(config.rabbitmq, function (err, connection) {
+		amqplib.connect(config.rabbitmq.connectionConfig, function (err, connection) {
 			assert.ifError(err);
 			
 			connection.createChannel((err, _channel) => {
 				assert.ifError(err);
 				channel = _channel;
+				
+				channel.on('close', () => {
+					assert.ifError(new Error('Channel close'));
+					
+					debug(err);
+				});
 				
 				channel.on('error', err => {
 					assert.ifError(err);
@@ -135,8 +172,6 @@ describe('Send stack tasks', function () {
 					debug(message);
 				});
 				
-				
-				let fileName = baseDirPath + '/file_';
 				
 				// Удаляем все к ебеням!
 				fs.remove(baseDirPath, err => {
@@ -161,39 +196,7 @@ describe('Send stack tasks', function () {
 										fs.mkdirp(config.transmitters.reserve.pathToStorage, err => {
 											assert.ifError(err);
 											
-											// Подготавливаем задачи для отправки их в работу
-											
-											async.parallel(
-												config.letters.map(letter => {
-													return cb => {
-														
-														async.eachOf(
-															Array(config.countGenerateTasks).fill(1).map(() => {
-																return `${new Date().getTime()}_${Math.random() * 999}`
-															}),
-															(item, idx, cb) => {
-																prepareTask(fileName + item, config.transmitters.reserve.pathToStorage + '/tmp_' + item, "copy", letter, (err, task) => {
-																	assert.ifError(err);
-																	
-																	stackTasks[task.id] = task;
-																	
-																	channel.sendToQueue(task.queueName, Buffer.from(JSON.stringify(task)));
-																	debug(`send to queue ${task.queueName}: ${task.id}`);
-																	
-																	cb();
-																});
-															},
-															cb
-														);
-														
-													}
-												}),
-												() => {
-													setTimeout(done, 2000);
-												}
-											);
-											
-											
+											done();
 										});
 									});
 									
@@ -207,19 +210,19 @@ describe('Send stack tasks', function () {
 	});
 	
 	it('start receiver', function (done) {
-		// receiver = require('../receiver')(config.receivers.reserve);
-		//
-		// receiver.debug = (message) => {
-		// 	debug(message);
-		// };
-		//
-		// receiver.on('error', err => {
-		// 	assert.ifError(err);
-		// });
-		//
-		// receiver.on('ready', err => {
-		// 	done();
-		// });
+		receiver = require('../receiver')(config.receivers.reserve);
+		
+		receiver.debug = (message) => {
+			// debug(message);
+		};
+		
+		receiver.on('error', err => {
+			assert.ifError(err);
+		});
+		
+		receiver.on('ready', err => {
+			done();
+		});
 	});
 	
 	it('start transmitter', function (done) {
@@ -228,51 +231,134 @@ describe('Send stack tasks', function () {
 		configTransmitter.fileSendMethods = config.fileSendMethods;
 		configTransmitter.levelDeepQueuePostfix = 1;
 		
-		transmitter = require('../transmitter')(configTransmitter, ['t', '2']);
+		transmitter = require('../transmitter')(configTransmitter);
 		
 		transmitter.debug = (message) => {
 			debug(message);
 		};
 		
 		transmitter.on('error', err => {
-			assert.ifError(err);
+			// assert.ifError(err);
+			debug(err);
 		});
 		
 		transmitter.on('consume', message => {
-			console.log(message);
+			// console.log(message);
 		});
 		
 		transmitter.on('ready', () => {
 			done();
 		});
 	});
-	
-	
-	it(`send ${config.countGenerateTasks * config.letters.length} by ${config.transmitters.reserve.prefetchCount} tasks with files`, function (done) {
-		let isDone = false;
-		transmitter.on('taskComplete', (task) => {
-			debug('complete: ' + task.message.id);
-			delete stackTasks[task.message.id];
+		
+		it(`send ${config.countGenerateTasks * config.letters.length} by ${config.transmitters.reserve.prefetchCount} tasks with files`, function (done) {
+			let isDone = false;
+			cntComplete = 0;
+			
+			transmitter.on('taskComplete', (task) => {
+				debug('complete: ' + task.message.id + ' | ' + (++cntComplete) + ' | ' + Object.keys(stackTasks).length);
+				delete stackTasks[task.message.id];
+				
+				if (isDone === false && Object.keys(stackTasks).length === 0) {
+					isDone = true;
+					
+					done();
+				}
+			});
+			
+			// Подготавливаем задачи для отправки их в работу
+			setTimeout(() => {
+				async.parallel(
+					config.letters.map(letter => {
+						return cb => {
+							generateRandomTask(channel, config.countGenerateTasks, stackTasks, letter, cb);
+						}
+					}),
+					() => {
+					}
+				);
+			}, 2000);
 		});
 		
 		
-		let timeInterval = setInterval(() => {
-			if (isDone) {
-				clearInterval(timeInterval);
-				return;
-			}
-			
-			if (Object.keys(stackTasks).length === 0) {
-				isDone = true;
-				done();
-			} else {
-				// debug(Object.keys(stackTasks).length);
-			}
-		}, 200);
+		// it(`RabbitMq close connection`, function (doneClose) {
+		// 	let isDone = false;
+		// 	let isClose = false;
+		// 	cntComplete = 0;
+		// 	let cntCompleteClose = 0;
+		// 	let cntGenerateTaskStep1 = 1;
+		// 	let cntGenerateTaskStep2 = 1;
+		// 	let letter = '2';
+		// 	let idxFoundChannel;
+		// 	/**
+		// 	 * Состав супчика:
+		// 	 * 1. Создаем очередь
+		// 	 * 2. Суем в нее задачи
+		// 	 * 3. Обрабатываем и в процессе обработки закрываем один канал
+		// 	 * 4. В очередь с закрытым каналом суем еще задач
+		// 	 *
+		// 	 * Трансмиттер должен уметь переподсоеденяться к закрытому каналу
+		// 	 */
+		//
+		// 	transmitter.on('taskComplete', (task) => {
+		// 		cntCompleteClose++;
+		//
+		// 		if (isClose === false) {
+		// 			isClose = true;
+		// 			//
+		// 			// 	//Канал закрываем
+		// 			transmitter.channels[idxFoundChannel].close(err => {
+		// 				assert.ifError(err);
+		//
+		// 				debug(`Close channel on message: ${idxFoundChannel} | ${task.message.id}`);
+		//
+		//
+		// 				// В эту очередь добавляем еще задач
+		// 				setTimeout(() => {
+		// 					//
+		// 					generateRandomTask(channel, cntGenerateTaskStep2, stackTasks, letter, () => {
+		// 						debug(`Step 2, generate ${cntGenerateTaskStep2} tasks end for letter "${letter}"`);
+		// 					});
+		//
+		// 				}, 15000);
+		//
+		//
+		// 			});
+		// 		}
+		//
+		// 		debug(cntCompleteClose + ' >= ' + (cntGenerateTaskStep1 + cntGenerateTaskStep2));
+		//
+		// 		if (
+		// 			isDone === false &&
+		// 			isClose === true &&
+		// 			cntCompleteClose >= (cntGenerateTaskStep1 + cntGenerateTaskStep2)
+		// 		) {
+		// 			isDone = true;
+		//
+		// 			doneClose();
+		// 		}
+		// 	});
+		//
+		//
+		// 	setTimeout(() => {
+		//
+		// 		debug(Object.keys(stackTasks));
+		//
+		// 		generateRandomTask(channel, cntGenerateTaskStep1, stackTasks, letter, () => {
+		//
+		// 			//Ищем индекс очереди, чтобы ее закрыть далее для теста
+		// 			Object.keys(transmitter.channels).forEach(idx => {
+		// 				if (idx.substr(-1) === letter) {
+		// 					idxFoundChannel = idx;
+		// 					debug(idxFoundChannel);
+		// 				}
+		// 			});
+		//
+		// 			debug(`Step 1, generate ${cntGenerateTaskStep1} tasks end for letter "${letter}" `);
+		// 		});
+		// 	}, 2000);
+		// });
 		
-		
-	});
-	
 	after(done => {
 		fs.remove(baseDirPath, err => {
 			fs.remove(config.transmitters.reserve.pathToStorage, err => {

@@ -4,7 +4,7 @@ const assert = require('assert');
 const fs = require('fs-extra');
 const path = require('path');
 const _ = require('lodash');
-let baseDirModule = '/home/projects/ulight/ulight8/node_modules/usync';
+let baseDirModule = './';
 let baseDirPath = 'test_tmp';
 
 const config = {
@@ -60,7 +60,7 @@ const config = {
 
 const UFileSync = require('..');
 
-let tests = function (uSync) {
+let tests = function (uSync, isRun) {
 	
 	describe('Test deprecated methods', function () {
 		
@@ -174,19 +174,21 @@ let tests = function (uSync) {
 			});
 		});
 		
-		it('close connection and reopen connection', function (done) {
-			let fileNameSrc = fullPathToFile + '_symlink_2';
-			
-			uSync.channel.close();
-			
-			uSync.fs.writeFile(fileNameSrc, 'example text...', err => {
-				assert.ifError(err);
-				uSync.fs.symlink(fileNameSrc, baseDirPath + siteDirPath + '/' + fileNameSymlink + '_2', err => {
+		if (isRun) {
+			it('close connection and reopen connection', function (done) {
+				let fileNameSrc = fullPathToFile + '_symlink_2';
+				
+				uSync.channel.close();
+				
+				uSync.fs.writeFile(fileNameSrc, 'example text...', err => {
 					assert.ifError(err);
-					done();
+					uSync.fs.symlink(fileNameSrc, baseDirPath + siteDirPath + '/' + fileNameSymlink + '_2', err => {
+						assert.ifError(err);
+						done();
+					});
 				});
 			});
-		});
+		}
 		
 		it('createWriteStream', function (done) {
 			let newFileName = fullPathToFile + '_by_stream';
@@ -291,7 +293,7 @@ describe('Test with run synchronisation', function () {
 		// console.log(err);
 	});
 	
-	tests(uSync);
+	tests(uSync, true);
 });
 
 
@@ -303,5 +305,5 @@ describe('Test with shutdown synchronisation', function () {
 		// console.log(err);
 	});
 	
-	tests(uSync2);
+	tests(uSync2, false);
 });
