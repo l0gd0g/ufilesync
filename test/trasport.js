@@ -4,12 +4,11 @@ const amqplib = require('amqplib/callback_api');
 
 const assert = require('assert');
 const fs = require('fs-extra');
-const _ = require('lodash');
 const async = require('async');
 
 // let baseDirModule = '/home/projects/ulight/ulight8/node_modules/usync';
-let baseDirModule = 'tests';
-let baseDirPath = 'test_tmp';
+const baseDirModule = 'tests';
+const baseDirPath = 'test_tmp';
 
 const config = {
 	exchange          : '',
@@ -18,7 +17,7 @@ const config = {
 	debugCommands     : [],
 	baseDir           : baseDirModule,
 	queueNameSyncFiles: 'syncTest',
-	watchDirs         : [baseDirPath + '/sites', baseDirPath + '/sites2'],
+	watchDirs         : [`${baseDirPath}/sites`, `${baseDirPath}/sites2`],
 	
 	fileSendMethods: ['write', 'writeFile', 'createWriteStream', 'rename', 'move', 'copy', 'copyFile'],
 	
@@ -44,8 +43,8 @@ const config = {
 			domainName      : 'localhost',
 			port            : 33800,
 			maxFieldsSize   : 10 * 1024 * 1024 * 1024,
-			uploadDir       : baseDirPath + '/upload',
-			baseDir         : baseDirPath + '/received',
+			uploadDir       : `${baseDirPath}/upload`,
+			baseDir         : `${baseDirPath}/received`,
 			uploadDirBase   : '',
 			isUseRemoveFiles: false,
 		},
@@ -54,7 +53,7 @@ const config = {
 		reserve: {
 			domainName   : 'localhost',
 			port         : 33800,
-			pathToStorage: baseDirPath + '/storage',
+			pathToStorage: `${baseDirPath}/storage`,
 			timeReconnect: 2000,
 			queuePrefix  : 'for_test_transmitter',
 			prefetchCount: 1
@@ -67,14 +66,14 @@ const config = {
 	// letters           : ['t']
 };
 
-let debug = function () {
+const debug = function () {
 	// console.log.apply(null, arguments);
 };
 
-let prepareTask = function (fileName, fileNameStorage, command, letter, cb) {
+const prepareTask = function (fileName, fileNameStorage, command, letter, cb) {
 	
 	// Создаем файл оригинал
-	fs.writeFile(fileName, 'example text...' + fileName, err => {
+	fs.writeFile(fileName, `example text...${fileName}`, err => {
 		assert.ifError(err);
 		
 		// Кладем файл(его состояние) в хранилище, для передачи на другой сервер. После выполнения передачи, файл будет удален из хранилища.
@@ -89,7 +88,7 @@ let prepareTask = function (fileName, fileNameStorage, command, letter, cb) {
 					null,
 					{
 						"id"       : fileName,
-						"queueName": config.transmitters.reserve.queuePrefix + '_' + letter,
+						"queueName": `${config.transmitters.reserve.queuePrefix}_${letter}`,
 						"dates"    : {
 							"begin"  : new Date(),
 							"fs"     : new Date(),
@@ -100,8 +99,8 @@ let prepareTask = function (fileName, fileNameStorage, command, letter, cb) {
 						"command"  : command,
 						"stats"    : stats,
 						"path"     : {
-							"src"  : fileName + '_' + command,
-							"dest" : fileName + '_' + command,
+							"src"  : `${fileName}_${command}`,
+							"dest" : `${fileName}_${command}`,
 							"store": fileNameStorage
 						}
 					}
@@ -111,17 +110,17 @@ let prepareTask = function (fileName, fileNameStorage, command, letter, cb) {
 	});
 };
 
-let generateRandomTask = function (channel, countGenerateTasks, stackTasks, letter, cb) {
+const generateRandomTask = function (channel, countGenerateTasks, stackTasks, letter, cb) {
 	
-	let fileName = baseDirPath + '/file_';
-	channel.assertQueue(config.transmitters.reserve.queuePrefix + '_' + letter, config.rabbitmq.queueConfig);
+	const fileName = `${baseDirPath}/file_`;
+	channel.assertQueue(`${config.transmitters.reserve.queuePrefix}_${letter}`, config.rabbitmq.queueConfig);
 	
 	async.eachOf(
 		Array(countGenerateTasks).fill(1).map(() => {
 			return `${new Date().getTime()}_${Math.random() * 999}`
 		}),
 		(item, idx, cb) => {
-			prepareTask(fileName + item, config.transmitters.reserve.pathToStorage + '/tmp_' + item, "copy", letter, (err, task) => {
+			prepareTask(fileName + item, `${config.transmitters.reserve.pathToStorage}/tmp_${item}`, "copy", letter, (err, task) => {
 				assert.ifError(err);
 				
 				stackTasks[task.id] = task;
@@ -144,7 +143,7 @@ let generateRandomTask = function (channel, countGenerateTasks, stackTasks, lett
 describe('Send stack tasks', function () {
 	let receiver;
 	let transmitter;
-	let stackTasks = {};
+	const stackTasks = {};
 	let channel;
 	let cntComplete = 0;
 	
@@ -212,7 +211,7 @@ describe('Send stack tasks', function () {
 	it('start receiver', function (done) {
 		receiver = require('../receiver')(config.receivers.reserve);
 		
-		receiver.debug = (message) => {
+		receiver.debug = (/* message */) => {
 			// debug(message);
 		};
 		
@@ -220,13 +219,13 @@ describe('Send stack tasks', function () {
 			assert.ifError(err);
 		});
 		
-		receiver.on('ready', err => {
+		receiver.on('ready', () => {
 			done();
 		});
 	});
 	
 	it('start transmitter', function (done) {
-		let configTransmitter = config.transmitters.reserve;
+		const configTransmitter = config.transmitters.reserve;
 		configTransmitter.rabbitmq = config.rabbitmq;
 		configTransmitter.fileSendMethods = config.fileSendMethods;
 		configTransmitter.levelDeepQueuePostfix = 1;
@@ -242,7 +241,7 @@ describe('Send stack tasks', function () {
 			debug(err);
 		});
 		
-		transmitter.on('consume', message => {
+	transmitter.on('consume', (/* message */) => {
 			// console.log(message);
 		});
 		
@@ -256,7 +255,7 @@ describe('Send stack tasks', function () {
 			cntComplete = 0;
 			
 			transmitter.on('taskComplete', (task) => {
-				debug('complete: ' + task.message.id + ' | ' + (++cntComplete) + ' | ' + Object.keys(stackTasks).length);
+				debug(`complete: ${task.message.id} | ${++cntComplete} | ${Object.keys(stackTasks).length}`);
 				delete stackTasks[task.message.id];
 				
 				if (isDone === false && Object.keys(stackTasks).length === 0) {
@@ -360,8 +359,8 @@ describe('Send stack tasks', function () {
 		// });
 		
 	after(done => {
-		fs.remove(baseDirPath, err => {
-			fs.remove(config.transmitters.reserve.pathToStorage, err => {
+		fs.remove(baseDirPath, () => {
+			fs.remove(config.transmitters.reserve.pathToStorage, () => {
 				done();
 				
 				process.exit();
