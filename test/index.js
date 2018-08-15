@@ -2,10 +2,9 @@
 
 const assert = require('assert');
 const fs = require('fs-extra');
-const path = require('path');
 const _ = require('lodash');
-let baseDirModule = './';
-let baseDirPath = 'test_tmp';
+const baseDirModule = './';
+const baseDirPath = 'test_tmp';
 
 const config = {
 	exchange          : '',
@@ -14,7 +13,7 @@ const config = {
 	debugCommands     : [],
 	baseDir           : baseDirModule,
 	queueNameSyncFiles: 'syncTest',
-	watchDirs         : [baseDirPath + '/sites', baseDirPath + '/sites2'],
+	watchDirs         : [`${baseDirPath}/sites`, `${baseDirPath}/sites2`],
 	
 	fileSendMethods: ['write', 'writeFile', 'createWriteStream', 'rename', 'move', 'copy', 'copyFile'],
 	
@@ -60,7 +59,7 @@ const config = {
 
 const UFileSync = require('..');
 
-let tests = function (uSync, isRun) {
+const tests = function (uSync, isRun) {
 	
 	describe('Test deprecated methods', function () {
 		
@@ -80,17 +79,16 @@ let tests = function (uSync, isRun) {
 	});
 	
 	describe('Test decorator', function () {
-		let fileName = 'tmpFile.txt';
-		let siteDirPath = '/sites/a/b/c/abc-sitename';
 		let fd;
-		let fileNameSymlink = 'symlinkFile.txt';
-		let fullPathToFile = baseDirPath + siteDirPath + '/' + fileName;
-		let fullPathToFileRelative = './' + baseDirPath + siteDirPath + '/' + fileName + '_2';
-		let fullPathToFile2 = baseDirPath + '/sites2/a/b/c/abc-sitename/' + fileName;
+		const fileName = 'tmpFile.txt';
+		const siteDirPath = '/sites/a/b/c/abc-sitename';
+		const fileNameSymlink = 'symlinkFile.txt';
+		const fullPathToFile = `${baseDirPath}${siteDirPath}/${fileName}`;
+		const fullPathToFileRelative = `./${baseDirPath}${siteDirPath}/${fileName}_2`;
 		
 		
 		before(done => {
-			fs.remove(baseDirPath, err => {
+			fs.remove(baseDirPath, () => {
 				uSync.on('ready', function () {
 					done();
 				});
@@ -130,7 +128,7 @@ let tests = function (uSync, isRun) {
 		
 		
 		it('copy file', function (done) {
-			let fileName = fullPathToFile + '_copy';
+			const fileName = `${fullPathToFile}_copy`;
 			uSync.fs.copy(fullPathToFile, fileName, err => {
 				assert.ifError(err);
 				done();
@@ -138,8 +136,8 @@ let tests = function (uSync, isRun) {
 		});
 		
 		it('copy file with relative path "./"', function (done) {
-			let fileNameSrc = '/tmp/testfile.tmp_123';
-			let fileNameDest = fullPathToFileRelative;
+			const fileNameSrc = '/tmp/testfile.tmp_123';
+			const fileNameDest = fullPathToFileRelative;
 			
 			uSync.fs.writeFile(fileNameSrc, 'example text...', err => {
 				assert.ifError(err);
@@ -164,10 +162,10 @@ let tests = function (uSync, isRun) {
 		});
 		
 		it('symlink', function (done) {
-			let fileNameSrc = fullPathToFile + '_symlink';
+			const fileNameSrc = `${fullPathToFile}_symlink`;
 			uSync.fs.writeFile(fileNameSrc, 'example text...', err => {
 				assert.ifError(err);
-				uSync.fs.symlink(fileNameSrc, baseDirPath + siteDirPath + '/' + fileNameSymlink, err => {
+				uSync.fs.symlink(fileNameSrc,`${baseDirPath}${siteDirPath}/${fileNameSymlink}`, err => {
 					assert.ifError(err);
 					done();
 				});
@@ -176,13 +174,13 @@ let tests = function (uSync, isRun) {
 		
 		if (isRun) {
 			it('close connection and reopen connection', function (done) {
-				let fileNameSrc = fullPathToFile + '_symlink_2';
+				const fileNameSrc = `${fullPathToFile}_symlink_`;
 				
 				uSync.channel.close();
 				
 				uSync.fs.writeFile(fileNameSrc, 'example text...', err => {
 					assert.ifError(err);
-					uSync.fs.symlink(fileNameSrc, baseDirPath + siteDirPath + '/' + fileNameSymlink + '_2', err => {
+					uSync.fs.symlink(fileNameSrc, `${baseDirPath}${siteDirPath}/${fileNameSymlink}_2`, err => {
 						assert.ifError(err);
 						done();
 					});
@@ -191,9 +189,9 @@ let tests = function (uSync, isRun) {
 		}
 		
 		it('createWriteStream', function (done) {
-			let newFileName = fullPathToFile + '_by_stream';
-			let readStream = uSync.fs.createReadStream(fullPathToFile);
-			let writeStream = uSync.fs.createWriteStream(newFileName);
+			const newFileName = `${fullPathToFile}_by_stream`;
+			const readStream = uSync.fs.createReadStream(fullPathToFile);
+			const writeStream = uSync.fs.createWriteStream(newFileName);
 			
 			readStream.pipe(writeStream);
 			
@@ -215,9 +213,9 @@ let tests = function (uSync, isRun) {
 		});
 		
 		it('createWriteStream with skip task', function (done) {
-			let newFileName = fullPathToFile + '_by_stream';
-			let readStream = uSync.fs.createReadStream(fullPathToFile);
-			let writeStream = uSync.fs.createWriteStream(uSync.taskSkip(), newFileName);
+			const newFileName = `${fullPathToFile}_by_stream`;
+			const readStream = uSync.fs.createReadStream(fullPathToFile);
+			const writeStream = uSync.fs.createWriteStream(uSync.taskSkip(), newFileName);
 			
 			readStream.pipe(writeStream);
 			
@@ -237,14 +235,14 @@ let tests = function (uSync, isRun) {
 		
 		
 		it('copy dir', function (done) {
-			uSync.fs.copy(baseDirPath + siteDirPath, baseDirPath + siteDirPath + '_copy', err => {
+			uSync.fs.copy(baseDirPath + siteDirPath, `${baseDirPath}${siteDirPath}_copy`, err => {
 				assert.ifError(err);
 				done();
 			});
 		});
 		
 		it('copy dir with option replace', function (done) {
-			uSync.fs.copy(baseDirPath + siteDirPath, baseDirPath + siteDirPath + '_copy', {replace: true}, err => {
+			uSync.fs.copy(baseDirPath + siteDirPath, `${baseDirPath}${siteDirPath}_copy`, {replace: true}, err => {
 				assert.ifError(err);
 				done();
 			});
@@ -289,7 +287,7 @@ let tests = function (uSync, isRun) {
 describe('Test with run synchronisation', function () {
 	const uSync = new UFileSync.synchronisation(config);
 	
-	uSync.on('error', err => {
+	uSync.on('error', () => {
 		// console.log(err);
 	});
 	
@@ -301,7 +299,7 @@ describe('Test with run synchronisation', function () {
 describe('Test with shutdown synchronisation', function () {
 	const uSync2 = new UFileSync.synchronisation(_.extend({isRunSync: false}, config));
 	
-	uSync2.on('error', err => {
+	uSync2.on('error', () => {
 		// console.log(err);
 	});
 	
